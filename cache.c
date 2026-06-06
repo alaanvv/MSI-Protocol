@@ -51,12 +51,31 @@ u8 cache_read(Cache cache, u16 addr, u8 bytes[CACHE_LINE_SIZE]) {
   return 1;
 }
 
+void cache_write(Cache* cache, u16 addr, u8 bytes[CACHE_LINE_SIZE]) {
+  u16 index = addr % CACHE_LINE_COUNT;
+  u16   tag = addr / CACHE_LINE_COUNT;
+  Line* line = &cache->lines[index];
+
+  DEBUG("[WRITING]\n");
+  DEBUG("Addres 0x%04x (%d)\n", addr, addr);
+  DEBUG("Tag    0x%04x (%d)\n", tag, tag);
+  DEBUG("Index  0x%04x (%d)\n", index, index);
+  DEBUG("Data   ");
+  for (u8 i = 0; i < CACHE_LINE_SIZE; i++) DEBUG("%d ", bytes[i]);
+  DEBUG("\n");
+
+  for (u8 i = 0; i < CACHE_LINE_SIZE; i++) line->bytes[i] = bytes[i];
+  line->tag   = tag;
+  line->valid = 1;
+  line->dirty = 0;
+}
+
 // ---
 
 int main() {
   Cache c = { 0 };
-  u8 result[CACHE_LINE_SIZE];
 
+  u8 result[CACHE_LINE_SIZE];
   cache_read(c, 1, result);
 
   return 0;
