@@ -1,0 +1,43 @@
+OBJETIVO DA TAREFA: simular o protocolo MSI para um sistema de cache de um processador com 4 núcleos.
+
+ESPECIFICAÇÕES DAS CACHES:
+- MAPEAMENTO DIRETO
+- 4 kiB DE CAPACIDADE
+- 16 BYTES POR LINHA
+- PALAVRAS E ENDEREÇOS DE 2 BYTES
+
+As requisições de leitura/escrita de cada core estão no arquivo TRACE.txt. Para cada requisição, seu programa deve retornar uma saída de acordo com o modelo abaixo:
+
+CORE [0/1/2/3] [READ/WRITE] [ENDEREÇO]
+REQUISIÇÃO DE PROCESSADOR: [PrRd/PrWr] no endereço [ENDEREÇO]
+LINHA MAPEADA: [ÍNDICE]
+TAG: [TAG]
+EVENTO NA CACHE: [HIT/MISS] de [LEITURA/ESCRITA]
+REQUISIÇÃO DE BARRAMENTO: [BusRd/BusWr/BusRdWr]
+CÓPIA PRESENTE NA(S) CACHE(S) DO(S) CORE(S) [0/1/2/3] NO ESTADO [S/M] ou NENHUMA CÓPIA VÁLIDA PRESENTE
+BLOCO LIDO DA [MEMÓRIA ou LINHA [ÍNDICE] DA CACHE DO CORE [0/1/2/3]] PARA A LINHA [ÍNDICE] DA CACHE DO CORE [0/1/2/3]
+MEMÓRIA RAM ATUALIZADA (WRITE-BACK) - se existir uma cópia no estado M em alguma outra cache
+ESTADO DA LINHA [ÍNDICE] DA CACHE DO CORE 0 ATUALIZADO PARA [I/S/M] - se houver
+ESTADO DA LINHA [ÍNDICE] DA CACHE DO CORE 1 ATUALIZADO PARA [I/S/M] - se houver
+ESTADO DA LINHA [ÍNDICE] DA CACHE DO CORE 2 ATUALIZADO PARA [I/S/M] - se houver
+ESTADO DA LINHA [ÍNDICE] DA CACHE DO CORE 3 ATUALIZADO PARA [I/S/M] - se houver
+
+Exemplo de saída para a primeira requisição:
+
+CORE 3 READ  0x1018
+REQUISIÇÃO DE PROCESSADOR: PrRd no endereço 0x1018
+LINHA MAPEADA: 0x01
+TAG: 0x1
+EVENTO NA CACHE: MISS DE LEITURA
+REQUISIÇÃO DE BARRAMENTO: BusRd
+NENHUMA CÓPIA VÁLIDA PRESENTE
+BLOCO LIDO DA MEMÓRIA PARA A LINHA 0x01 DA CACHE DO CORE 3
+ESTADO DA LINHA 0x01 DA CACHE DO CORE 3 ATUALIZADO PARA S
+
+
+Todas as saídas do programa devem ser escritas em um arquivo. Além disso, seu programa deve informar, no mesmo arquivo:
+- A taxa de erros de leitura/escrita em cada core;
+- O número de invalidações forçadas (vezes em que uma linha teve que ser invalidada por causa de uma escrita em outra cache);
+- O número de operações de write-back (atualização da memória)
+
+Data de entrega: 08/06
