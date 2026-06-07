@@ -7,27 +7,19 @@
 // ---
 
 u8 cache_read(Cache cache, u16 addr) {
-  u16 offset = addr % CACHE_LINE_SIZE;
-  u16 index  = addr / CACHE_LINE_SIZE % CACHE_LINE_COUNT;
-  u16   tag  = addr / CACHE_LINE_SIZE / CACHE_LINE_COUNT;
-  Line line  = cache.lines[index];
+  u16  index = addr / CACHE_LINE_SIZE % CACHE_LINE_COUNT;
+  u16    tag = addr / CACHE_LINE_SIZE / CACHE_LINE_COUNT;
 
-  printf("-- READING\n\n");
-  printf("Address 0x%04x (%d)\n", addr, addr);
-  printf("Tag     0x%04x (%d)\n", tag, tag);
-  printf("Index   0x%04x (%d)\n", index, index);
-  printf("Offset  0x%04x (%d)\n\n", offset, offset);
-  print_cache_header();
-  print_cache_line(line, offset);
-  printf("\n");
+  Line line = cache.lines[index];
+  u8    hit = line.valid && tag == line.tag;
 
-  if (!line.valid || tag != line.tag) {
-    printf("Cache miss\n");
-    return 0;
-  }
+  printf("--  READING  --\n");
+  printf("Addr 0x%04x (%d)\n", addr, addr);
+  printf("Tag  0x%04x (%d)\n", tag, tag);
+  printf("Idx  0x%04x (%d)\n", index, index);
+  print_cache_line(line, index);
 
-  printf("Cache hit\n");
-  return 1;
+  return hit;
 }
 
 void cache_write(Cache* cache, u16 addr) {
