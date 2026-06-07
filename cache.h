@@ -23,18 +23,22 @@ u8 cache_read(Cache cache, u16 addr) {
 }
 
 void cache_write(Cache* cache, u16 addr) {
-  u16 index = addr % CACHE_LINE_COUNT;
-  u16   tag = addr / CACHE_LINE_COUNT;
+  u16  index = addr / CACHE_LINE_SIZE % CACHE_LINE_COUNT;
+  u16    tag = addr / CACHE_LINE_SIZE / CACHE_LINE_COUNT;
+
   Line* line = &cache->lines[index];
 
-  printf("[WRITING]\n");
-  printf("Addres 0x%04x (%d)\n", addr, addr);
-  printf("Tag    0x%04x (%d)\n", tag, tag);
-  printf("Index  0x%04x (%d)\n", index, index);
+  printf("--  WRITING  --\n");
+  printf("Addr 0x%04x (%d)\n", addr, addr);
+  printf("Tag  0x%04x (%d)\n", tag, tag);
+  printf("Idx  0x%04x (%d)\n", index, index);
+  print_cache_line(*line, index);
 
   line->tag   = tag;
   line->valid = 1;
   line->dirty = 0;
+
+  print_cache_line(*line, index);
 }
 
 #endif
