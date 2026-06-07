@@ -4,16 +4,16 @@
 #include "core.h"
 
 void print_cache_header() {
-  DEBUG("         Valid | Dirty | Tag    | Data\n");
+  printf("         Valid | Dirty | Tag    | Data\n");
 }
 
 void print_cache_line(Line line, u8 index) {
-  DEBUG(" %03d -> ", index);
-  DEBUG(" %d     |", line.valid);
-  DEBUG(" %d     |", line.dirty);
-  DEBUG(" 0x%04x | ", line.tag);
-  for (u8 i = 0; i < CACHE_LINE_SIZE; i++) DEBUG("0x%x ", line.bytes[i]);
-  DEBUG("\n");
+  printf(" %03d -> ", index);
+  printf(" %d     |", line.valid);
+  printf(" %d     |", line.dirty);
+  printf(" 0x%04x | ", line.tag);
+  for (u8 i = 0; i < CACHE_LINE_SIZE; i++) printf("0x%x ", line.bytes[i]);
+  printf("\n");
 }
 
 void print_cache(Cache cache) {

@@ -5,11 +5,8 @@
 #define CACHE_LINE_SIZE  16
 #define CACHE_LINE_COUNT (TOTAL_CACHE_SIZE / CACHE_LINE_SIZE)
 
-#define DEBUG(...) { if (DEBUG_MODE) printf(__VA_ARGS__); }
 #define PRINT(...) { printf(__VA_ARGS__); printf("\n"); }
 #define ASSERT(x, ...) if (!(x)) { PRINT(__VA_ARGS__); exit(1); }
-
-#define DEBUG_MODE 1
 
 #include <stdint.h>
 #include <stdio.h>
