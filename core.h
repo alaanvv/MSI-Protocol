@@ -21,9 +21,8 @@ typedef double   f64;
 typedef char     c8;
 
 typedef struct {
-  u16 tag;
-  u8  valid;
-  u8  dirty;
+  char state;
+  u16  tag;
 } Line;
 
 typedef struct {

@@ -14,7 +14,7 @@ u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
   if (tag_out)   *tag_out   = tag;
   if (index_out) *index_out = index;
 
-  u8 hit = line->valid && tag == line->tag;
+  u8 hit = line->state != 'I';
 
   printf("Address  0x%04x (%d)\n", addr, addr);
   printf("├── Tag  0x%04x (%d)\n", tag, tag);
@@ -45,8 +45,7 @@ u8 cache_wr(Cache* cache, u16 addr) {
 
   if (hit) {
     line->tag   = tag;
-    line->valid = 1;
-    line->dirty = 0;
+    line->state = 'M';
     print_cache_line(*line, index);
   }
 
