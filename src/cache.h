@@ -19,7 +19,7 @@ u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
   if (tag_out)   *tag_out   = tag;
   if (index_out) *index_out = index;
 
-  u8 hit = line->state != 'I';
+  u8 hit = line->state != 'I' && line->tag == tag;
 
   DEBUG("Address  0x%04x (%d)\n", addr, addr);
   DEBUG("├── Tag  0x%04x (%d)\n", tag, tag);
