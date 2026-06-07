@@ -21,19 +21,19 @@ u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
 
   u8 hit = line->state != 'I';
 
-  printf("Address  0x%04x (%d)\n", addr, addr);
-  printf("├── Tag  0x%04x (%d)\n", tag, tag);
-  printf("└── Idx  0x%04x (%d)\n", index, index);
-  print_line(*line);
+  DEBUG("Address  0x%04x (%d)\n", addr, addr);
+  DEBUG("├── Tag  0x%04x (%d)\n", tag, tag);
+  DEBUG("└── Idx  0x%04x (%d)\n", index, index);
+  if (DEBUG_MODE) print_line(*line);
 
-  if (hit) printf("Cache hit\n");
-  else     printf("Cache miss\n");
+  if (hit) DEBUG("Cache hit\n");
+  else     DEBUG("Cache miss\n");
 
   return hit;
 }
 
 void cache_rd(Cache* cache, u8 core_id, u16 addr) {
-  printf("--  READING  --\n");
+  DEBUG("--  READING  --\n");
 
   u16 tag, index;
   u8 hit = tag_lookup(cache, addr, &tag, &index);
@@ -44,12 +44,12 @@ void cache_rd(Cache* cache, u8 core_id, u16 addr) {
     bus_sig(BUS_RD, core_id, addr);
     line->tag   = tag;
     line->state = 'S';
-    print_line(*line);
+    if (DEBUG_MODE) print_line(*line);
   }
 }
 
 void cache_wr(Cache* cache, u8 core_id, u16 addr) {
-  printf("--  WRITING  --\n");
+  DEBUG("--  WRITING  --\n");
 
   u16 tag, index;
   u8 hit = tag_lookup(cache, addr, &tag, &index);
@@ -61,13 +61,13 @@ void cache_wr(Cache* cache, u8 core_id, u16 addr) {
       bus_sig(BUS_WR, core_id, addr);
     line->tag   = tag;
     line->state = 'M';
-    print_line(*line);
+    if (DEBUG_MODE) print_line(*line);
   }
   else {
     bus_sig(BUS_RD_WR, core_id, addr);
     line->tag   = tag;
     line->state = 'M';
-    print_line(*line);
+    if (DEBUG_MODE) print_line(*line);
   }
 }
 
@@ -88,7 +88,7 @@ void cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr) {
     if (state != 'M') return;
 
     cache->lines[index].state = 'S';
-    printf("Data found on core %d\n", core_id);
+    DEBUG("Data found on core %d\n", core_id);
   }
   if (req == BUS_WR) {
     u16 index;
@@ -103,7 +103,7 @@ void cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr) {
     if (!hit) return;
 
     char state = cache->lines[index].state;
-    if (state == 'M') printf("Data found on core %d\n", core_id);
+    if (state == 'M') DEBUG("Data found on core %d\n", core_id);
 
     cache->lines[index].state = 'I';
   }

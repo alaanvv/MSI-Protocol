@@ -4,9 +4,13 @@
 #define PRINT(...) { printf(__VA_ARGS__); printf("\n"); }
 
 #define CACHE_COUNT 4
-#define TOTAL_CACHE_SIZE 4096
+#define TOTAL_CACHE_SIZE 16 * 10
 #define CACHE_LINE_SIZE  16
 #define CACHE_LINE_COUNT (TOTAL_CACHE_SIZE / CACHE_LINE_SIZE)
+
+#define DEBUG_MODE 0
+#define DEBUG(...) (DEBUG_MODE ? printf(__VA_ARGS__) : 0)
+#define INTERACTIVE_MODE 1
 
 #include <stdint.h>
 #include <stdio.h>
