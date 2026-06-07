@@ -6,7 +6,6 @@
 #define CACHE_LINE_COUNT (TOTAL_CACHE_SIZE / CACHE_LINE_SIZE)
 
 #define PRINT(...) { printf(__VA_ARGS__); printf("\n"); }
-#define ASSERT(x, ...) if (!(x)) { PRINT(__VA_ARGS__); exit(1); }
 
 #include <stdint.h>
 #include <stdio.h>
@@ -25,7 +24,6 @@ typedef struct {
   u16 tag;
   u8  valid;
   u8  dirty;
-  u8  bytes[CACHE_LINE_SIZE];
 } Line;
 
 typedef struct {

@@ -6,7 +6,7 @@
 
 // ---
 
-u8 cache_read(Cache cache, u16 addr, char* data) {
+u8 cache_read(Cache cache, u16 addr) {
   u16 offset = addr % CACHE_LINE_SIZE;
   u16 index  = addr / CACHE_LINE_SIZE % CACHE_LINE_COUNT;
   u16   tag  = addr / CACHE_LINE_SIZE / CACHE_LINE_COUNT;
@@ -27,11 +27,10 @@ u8 cache_read(Cache cache, u16 addr, char* data) {
   }
 
   printf("Cache hit\n");
-  *data = line.bytes[offset];
   return 1;
 }
 
-void cache_write(Cache* cache, u16 addr, u8 bytes[CACHE_LINE_SIZE]) {
+void cache_write(Cache* cache, u16 addr) {
   u16 index = addr % CACHE_LINE_COUNT;
   u16   tag = addr / CACHE_LINE_COUNT;
   Line* line = &cache->lines[index];
@@ -40,11 +39,7 @@ void cache_write(Cache* cache, u16 addr, u8 bytes[CACHE_LINE_SIZE]) {
   printf("Addres 0x%04x (%d)\n", addr, addr);
   printf("Tag    0x%04x (%d)\n", tag, tag);
   printf("Index  0x%04x (%d)\n", index, index);
-  printf("Data   ");
-  for (u8 i = 0; i < CACHE_LINE_SIZE; i++) printf("%d ", bytes[i]);
-  printf("\n");
 
-  for (u8 i = 0; i < CACHE_LINE_SIZE; i++) line->bytes[i] = bytes[i];
   line->tag   = tag;
   line->valid = 1;
   line->dirty = 0;
