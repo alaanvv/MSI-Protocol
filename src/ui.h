@@ -3,15 +3,10 @@
 
 #include "core.h"
 
-void print_cache_line(Line line, u8 index) {
-  printf("%03d -> ", index);
-  printf("%c | ", line.state);
-  printf("0x%04x\n", line.tag);
-}
-
-void print_cache(Cache cache) {
-  for (u16 i = 0; i < CACHE_LINE_COUNT; i++)
-    print_cache_line(cache.lines[i], i);
+void print_line(Line line) {
+  printf("┌───┬────────┐\n");
+  printf("│ %c │ 0x%04x │\n", line.state, line.tag);
+  printf("└───┴────────┘\n");
 }
 
 #endif

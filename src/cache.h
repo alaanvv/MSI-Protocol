@@ -19,7 +19,7 @@ u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
   printf("Address  0x%04x (%d)\n", addr, addr);
   printf("├── Tag  0x%04x (%d)\n", tag, tag);
   printf("└── Idx  0x%04x (%d)\n", index, index);
-  print_cache_line(*line, index);
+  print_line(*line);
 
   if (hit) printf("Cache hit\n");
   else     printf("Cache miss\n");
@@ -46,7 +46,7 @@ u8 cache_wr(Cache* cache, u16 addr) {
   if (hit) {
     line->tag   = tag;
     line->state = 'M';
-    print_cache_line(*line, index);
+    print_line(*line);
   }
 
   return hit;
