@@ -3,8 +3,8 @@
 int main() {
   Cache c = { 0 };
 
-  char res;
-  print_cache(c);
+  cache_rd(&c, 1);
+  cache_wr(&c, 1);
 
   return 0;
 }
