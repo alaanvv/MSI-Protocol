@@ -24,11 +24,12 @@ u8 cache_rd(Cache* cache, u16 addr) {
   return hit;
 }
 
-void cache_wr(Cache* cache, u16 addr) {
+u8 cache_wr(Cache* cache, u16 addr) {
   u16  index = addr / CACHE_LINE_SIZE % CACHE_LINE_COUNT;
   u16    tag = addr / CACHE_LINE_SIZE / CACHE_LINE_COUNT;
 
   Line* line = &cache->lines[index];
+  u8    hit = line->valid && tag == line->tag;
 
   printf("--  WRITING  --\n");
   printf("Address  0x%04x (%d)\n", addr, addr);
@@ -36,10 +37,16 @@ void cache_wr(Cache* cache, u16 addr) {
   printf("└── Idx  0x%04x (%d)\n", index, index);
   print_cache_line(*line, index);
 
-  line->tag   = tag;
-  line->valid = 1;
-  line->dirty = 0;
-  print_cache_line(*line, index);
+  if (hit) {
+    line->tag   = tag;
+    line->valid = 1;
+    line->dirty = 0;
+    print_cache_line(*line, index);
+  }
+
+  if (hit) printf("Cache hit\n");
+  else     printf("Cache miss\n");
+  return hit;
 }
 
 #endif
