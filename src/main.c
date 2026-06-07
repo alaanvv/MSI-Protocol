@@ -41,6 +41,16 @@ int main() {
     }
   }
 
+  for (u8 c = 0; c < CACHE_COUNT; c++) {
+    DEBUG("TAXA DE ERROS DE LEITURA DO CORE %d: %f\n", c, (f32) read_errors[c] / total_reads[c]);
+    DEBUG("TAXA DE ERROS DE ESCRITA DO CORE %d: %f\n", c, (f32) write_errors[c] / total_writes[c]);
+  }
+  DEBUG("INVALIDAÇÕES FORÇADAS: %d\n", total_force_invalidations);
+  DEBUG("WRITE-BACKS: %d\n", total_write_backs);
+
+  if (INTERACTIVE_MODE) {
+    getchar();
+  }
 
   return 0;
 }

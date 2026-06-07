@@ -25,6 +25,8 @@ u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
 }
 
 void cache_rd(Cache* cache, u8 core_id, u16 addr) {
+  total_reads[core_id]++;
+
   u16 tag, index;
   u8 hit = tag_lookup(cache, addr, &tag, &index);
 
@@ -34,6 +36,7 @@ void cache_rd(Cache* cache, u8 core_id, u16 addr) {
   Line* line = &cache->lines[index];
 
   if (!hit) {
+    read_errors[core_id]++;
     DEBUG("EVENTO NA CACHE: MISS DE LEITURA\n");
     i8 read_from = -1;
     bus_sig(BUS_RD, core_id, addr, &read_from);
@@ -41,11 +44,14 @@ void cache_rd(Cache* cache, u8 core_id, u16 addr) {
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
     line->tag   = tag;
     line->state = 'S';
+    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA S\n", index, core_id);
   }
   else DEBUG("EVENTO NA CACHE: HIT DE LEITURA\n");
 }
 
 void cache_wr(Cache* cache, u8 core_id, u16 addr) {
+  total_writes[core_id]++;
+
   u16 tag, index;
   u8 hit = tag_lookup(cache, addr, &tag, &index);
 
@@ -56,12 +62,15 @@ void cache_wr(Cache* cache, u8 core_id, u16 addr) {
 
   if (hit) {
     DEBUG("EVENTO NA CACHE: HIT DE ESCRITA\n");
+    i8 read_from = -1;
     if (line->state == 'S')
-      bus_sig(BUS_WR, core_id, addr, NULL);
+      bus_sig(BUS_WR, core_id, addr, &read_from);
     line->tag   = tag;
     line->state = 'M';
+    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA M\n", index, core_id);
   }
   else {
+    write_errors[core_id]++;
     DEBUG("EVENTO NA CACHE: MISS DE ESCRITA\n");
     i8 read_from = -1;
     bus_sig(BUS_RD_WR, core_id, addr, &read_from);
@@ -69,6 +78,7 @@ void cache_wr(Cache* cache, u8 core_id, u16 addr) {
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
     line->tag   = tag;
     line->state = 'M';
+    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA M\n", index, core_id);
   }
 }
 
@@ -81,7 +91,7 @@ void bus_sig(BusReq req, u8 from_id, u16 addr, i8* read_from) {
   for (u8 c = 0; c < CACHE_COUNT; c++) {
     if (c == from_id) continue;
     u8 _found = cache_snoop(&cores[c], c, req, addr, read_from);
-    found_multiple = found && _found;
+    found_multiple |= found && _found;
     found = found || _found;
     char buffer[32];
     sprintf(buffer, "%d ", c);
@@ -101,12 +111,16 @@ u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from) {
     if (!hit) return 0;
     char state = cache->lines[index].state;
 
-    if (state != 'M') return 1;
+    if (state != 'M') {
+      return 1;
+    }
 
+    total_write_backs++;
     DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
     *read_from = core_id;
     cache->lines[index].state = 'S';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA S\n", index, core_id);
+    return 1;
   }
   if (req == BUS_WR) {
     u16 index;
@@ -115,6 +129,7 @@ u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from) {
 
     if (cache->lines[index].state == 'M') DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
 
+    total_force_invalidations++;
     cache->lines[index].state = 'I';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core_id);
     return 1;
@@ -127,9 +142,12 @@ u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from) {
 
     if (state == 'M') {
       DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+      total_write_backs++;
       *read_from = core_id;
     }
 
+    total_force_invalidations++;
+    cache->lines[index].state = 'I';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core_id);
     return 1;
   }
