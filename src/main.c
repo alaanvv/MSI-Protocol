@@ -1,9 +1,6 @@
-#include "bus.h"
 #include "cache.h"
 
 int main() {
-  Cache cores[4] = { 0 };
-
   for (u8 c = 0; c < 4; c++)
     for (u32 l = 0; l < CACHE_LINE_COUNT; l++)
       cores[c].lines[l].state = 'I';
@@ -18,11 +15,8 @@ int main() {
     sscanf(buffer, "CORE %hhd %c%*s %hx", &core_id, &op, &addr);
 
     Cache* cache = &cores[core_id];
-    if (op == 'R') {
-      BusReq bus_req = cache_rd(cache, addr);
-      bus_sig(bus_req, cores, core_id, addr);
-    }
-    else           cache_wr(cache, addr);
+    if (op == 'R') cache_rd(cache, core_id, addr);
+    else           cache_wr(cache, core_id, addr);
   }
 
   return 0;

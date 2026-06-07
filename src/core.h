@@ -22,11 +22,11 @@ typedef double   f64;
 typedef char     c8;
 
 typedef enum {
-  NO_CACHE_REQ, PR_RD, PR_WR
+  PR_RD, PR_WR
 } CacheReq;
 
 typedef enum {
-  NO_BUS_REQ, BUS_RD, BUS_RD_WR, BUS_WR
+  BUS_RD, BUS_RD_WR, BUS_WR
 } BusReq;
 
 typedef struct {
@@ -37,5 +37,7 @@ typedef struct {
 typedef struct {
   Line lines[CACHE_LINE_COUNT];
 } Cache;
+
+Cache cores[4] = { 0 };
 
 #endif
