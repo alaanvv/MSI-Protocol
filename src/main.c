@@ -1,3 +1,4 @@
+#include "bus.h"
 #include "cache.h"
 
 int main() {
@@ -8,7 +9,7 @@ int main() {
       cores[c].lines[l].state = 'I';
 
   c8 buffer[64];
-  FILE* file = fopen("in/TRACE.txt", "r");
+  FILE* file = fopen("in/SMALL_TRACE.txt", "r");
   while (fgets(buffer, 64, file)) {
     u8 core_id;
     char op;
@@ -17,7 +18,10 @@ int main() {
     sscanf(buffer, "CORE %hhd %c%*s %hx", &core_id, &op, &addr);
 
     Cache* cache = &cores[core_id];
-    if (op == 'R') cache_rd(cache, addr);
+    if (op == 'R') {
+      BusReq bus_req = cache_rd(cache, addr);
+      bus_sig(bus_req, cores, core_id, addr);
+    }
     else           cache_wr(cache, addr);
   }
 

@@ -27,12 +27,13 @@ u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
   return hit;
 }
 
-u8 cache_rd(Cache* cache, u16 addr) {
+BusReq cache_rd(Cache* cache, u16 addr) {
   printf("--  READING  --\n");
 
   u8 hit = tag_lookup(cache, addr, NULL, NULL);
 
-  return hit;
+  if (hit) return NO_BUS_REQ;
+  else     return BUS_RD;
 }
 
 u8 cache_wr(Cache* cache, u16 addr) {
@@ -50,6 +51,20 @@ u8 cache_wr(Cache* cache, u16 addr) {
   }
 
   return hit;
+}
+
+void cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr) {
+  if (req == BUS_RD) {
+    u16 index;
+    u8 hit = tag_lookup(cache, addr, NULL, &index);
+    if (!hit) return;
+
+    char state = cache->lines[index].state;
+    if (state != 'M') return;
+
+    cache->lines[index].state = 'S';
+    printf("Data found on core %d\n", core_id);
+  }
 }
 
 #endif
