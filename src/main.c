@@ -7,11 +7,9 @@ int main() {
     for (u32 l = 0; l < CACHE_LINE_COUNT; l++)
       cores[c].lines[l].state = 'I';
 
-  FILE* file = fopen("TRACE.txt", "r");
   c8 buffer[64];
-
-  u8 i = 0;
-  while (fgets(buffer, 64, file) && i++ < 10) {
+  FILE* file = fopen("in/TRACE.txt", "r");
+  while (fgets(buffer, 64, file)) {
     u8 core_id;
     char op;
     u16 addr;
