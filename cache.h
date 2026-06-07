@@ -1,22 +1,8 @@
-#define TOTAL_CACHE_SIZE 4 * 2^10
-#define CACHE_LINE_SIZE  16
-#define CACHE_LINE_COUNT (TOTAL_CACHE_SIZE / CACHE_LINE_SIZE)
-
-#define DEBUG_MODE 1
-#define DEBUG(...) { if (DEBUG_MODE) printf(__VA_ARGS__); }
+#ifndef CACHE_H
+#define CACHE_H
 
 #include "core.h"
-
-typedef struct {
-  u16 tag;
-  u8  valid;
-  u8  dirty;
-  u8  bytes[CACHE_LINE_SIZE];
-} Line;
-
-typedef struct {
-  Line lines[CACHE_LINE_COUNT];
-} Cache;
+#include "ui.h"
 
 // ---
 
@@ -29,12 +15,9 @@ u8 cache_read(Cache cache, u16 addr, u8 bytes[CACHE_LINE_SIZE]) {
   DEBUG("Address 0x%04x (%d)\n", addr, addr);
   DEBUG("Tag     0x%04x (%d)\n", tag, tag);
   DEBUG("Index   0x%04x (%d)\n", index, index);
-  DEBUG("\n Valid | Dirty | Tag        | Data\n");
-  DEBUG(" %d     |", line.valid);
-  DEBUG(" %d     |", line.dirty);
-  DEBUG(" 0x%04x (%d) | ", line.tag, line.tag);
-  for (u8 i = 0; i < CACHE_LINE_SIZE; i++) DEBUG("0x%x ", line.bytes[i]);
-  DEBUG("\n\n");
+  print_cache_header();
+  print_cache_line(line, 0);
+  DEBUG("\n");
 
   if (!line.valid) {
     DEBUG("Cache miss due to invalid line\n");
@@ -70,13 +53,4 @@ void cache_write(Cache* cache, u16 addr, u8 bytes[CACHE_LINE_SIZE]) {
   line->dirty = 0;
 }
 
-// ---
-
-int main() {
-  Cache c = { 0 };
-
-  u8 result[CACHE_LINE_SIZE];
-  cache_read(c, 1, result);
-
-  return 0;
-}
+#endif

@@ -1,8 +1,15 @@
 #ifndef CORE_H
 #define CORE_H
 
+#define TOTAL_CACHE_SIZE 4096
+#define CACHE_LINE_SIZE  16
+#define CACHE_LINE_COUNT (TOTAL_CACHE_SIZE / CACHE_LINE_SIZE)
+
+#define DEBUG(...) { if (DEBUG_MODE) printf(__VA_ARGS__); }
 #define PRINT(...) { printf(__VA_ARGS__); printf("\n"); }
 #define ASSERT(x, ...) if (!(x)) { PRINT(__VA_ARGS__); exit(1); }
+
+#define DEBUG_MODE 1
 
 #include <stdint.h>
 #include <stdio.h>
@@ -16,5 +23,16 @@ typedef int32_t  i32;
 typedef float    f32;
 typedef double   f64;
 typedef char     c8;
+
+typedef struct {
+  u16 tag;
+  u8  valid;
+  u8  dirty;
+  u8  bytes[CACHE_LINE_SIZE];
+} Line;
+
+typedef struct {
+  Line lines[CACHE_LINE_COUNT];
+} Cache;
 
 #endif
