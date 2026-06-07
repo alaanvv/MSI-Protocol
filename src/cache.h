@@ -6,8 +6,8 @@
 
 // ---
 
-void bus_sig(BusReq req, u8 from_id, u16 addr);
-void cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr);
+void bus_sig(BusReq req, u8 from_id, u16 addr, i8* read_from);
+u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from);
 
 // ---
 
@@ -21,92 +21,119 @@ u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
 
   u8 hit = line->state != 'I' && line->tag == tag;
 
-  DEBUG("Address  0x%04x (%d)\n", addr, addr);
-  DEBUG("├── Tag  0x%04x (%d)\n", tag, tag);
-  DEBUG("└── Idx  0x%04x (%d)\n", index, index);
-  if (DEBUG_MODE) print_line(*line);
-
-  if (hit) DEBUG("Cache hit\n");
-  else     DEBUG("Cache miss\n");
-
   return hit;
 }
 
 void cache_rd(Cache* cache, u8 core_id, u16 addr) {
-  DEBUG("--  READING  --\n");
-
   u16 tag, index;
   u8 hit = tag_lookup(cache, addr, &tag, &index);
+
+  DEBUG("LINHA MAPEADA: 0x%02x\n", index);
+  DEBUG("TAG:  0x%01x\n", tag);
 
   Line* line = &cache->lines[index];
 
   if (!hit) {
-    bus_sig(BUS_RD, core_id, addr);
+    DEBUG("EVENTO NA CACHE: MISS DE LEITURA\n");
+    i8 read_from = -1;
+    bus_sig(BUS_RD, core_id, addr, &read_from);
+    if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core_id);
+    else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
     line->tag   = tag;
     line->state = 'S';
-    if (DEBUG_MODE) print_line(*line);
   }
+  else DEBUG("EVENTO NA CACHE: HIT DE LEITURA\n");
 }
 
 void cache_wr(Cache* cache, u8 core_id, u16 addr) {
-  DEBUG("--  WRITING  --\n");
-
   u16 tag, index;
   u8 hit = tag_lookup(cache, addr, &tag, &index);
+
+  DEBUG("LINHA MAPEADA: 0x%02x\n", index);
+  DEBUG("TAG:  0x%01x\n", tag);
 
   Line* line = &cache->lines[index];
 
   if (hit) {
+    DEBUG("EVENTO NA CACHE: HIT DE ESCRITA\n");
     if (line->state == 'S')
-      bus_sig(BUS_WR, core_id, addr);
+      bus_sig(BUS_WR, core_id, addr, NULL);
     line->tag   = tag;
     line->state = 'M';
-    if (DEBUG_MODE) print_line(*line);
   }
   else {
-    bus_sig(BUS_RD_WR, core_id, addr);
+    DEBUG("EVENTO NA CACHE: MISS DE ESCRITA\n");
+    i8 read_from = -1;
+    bus_sig(BUS_RD_WR, core_id, addr, &read_from);
+    if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core_id);
+    else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
     line->tag   = tag;
     line->state = 'M';
-    if (DEBUG_MODE) print_line(*line);
   }
 }
 
-void bus_sig(BusReq req, u8 from_id, u16 addr) {
+void bus_sig(BusReq req, u8 from_id, u16 addr, i8* read_from) {
+  DEBUG("REQUISIÇÃO DE BARRAMENTO: %s\n", BusReqView[req]);
+
+  u8 found = 0;
+  u8 found_multiple = 0;
+  char found_str[16] = {0};
   for (u8 c = 0; c < CACHE_COUNT; c++) {
     if (c == from_id) continue;
-    cache_snoop(&cores[c], c, req, addr);
+    u8 _found = cache_snoop(&cores[c], c, req, addr, read_from);
+    found_multiple = found && _found;
+    found = found || _found;
+    char buffer[32];
+    sprintf(buffer, "%d ", c);
+    if (_found) strcat(found_str, buffer);
+  }
+  if (!found) DEBUG("NENHUMA CÓPIA VÁLIDA PRESENTE\n");
+  else {
+    if (found_multiple) DEBUG("CÓPIA PRESENTE NAS CACHES DOS CORES %sNO ESTADO S\n", found_str);
+    else DEBUG("CÓPIA PRESENTE NA CACHE DO CORE %sNO ESTADO %c\n", found_str, *read_from == -1 ? 'S' : 'M');
   }
 }
 
-void cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr) {
+u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from) {
   if (req == BUS_RD) {
     u16 index;
     u8 hit = tag_lookup(cache, addr, NULL, &index);
-    if (!hit) return;
-
+    if (!hit) return 0;
     char state = cache->lines[index].state;
-    if (state != 'M') return;
 
+    if (state != 'M') return 1;
+
+    DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+    *read_from = core_id;
     cache->lines[index].state = 'S';
-    DEBUG("Data found on core %d\n", core_id);
+    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA S\n", index, core_id);
   }
   if (req == BUS_WR) {
     u16 index;
     u8 hit = tag_lookup(cache, addr, NULL, &index);
-    if (!hit) return;
+    if (!hit) return 0;
+
+    if (cache->lines[index].state == 'M') DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
 
     cache->lines[index].state = 'I';
+    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core_id);
+    return 1;
   }
   if (req == BUS_RD_WR) {
     u16 index;
     u8 hit = tag_lookup(cache, addr, NULL, &index);
-    if (!hit) return;
-
+    if (!hit) return 0;
     char state = cache->lines[index].state;
-    if (state == 'M') DEBUG("Data found on core %d\n", core_id);
 
-    cache->lines[index].state = 'I';
+    if (state == 'M') {
+      DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+      *read_from = core_id;
+    }
+
+    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core_id);
+    return 1;
   }
+  return 0;
 }
 
 #endif

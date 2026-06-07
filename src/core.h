@@ -8,9 +8,10 @@
 #define CACHE_LINE_SIZE  16
 #define CACHE_LINE_COUNT (TOTAL_CACHE_SIZE / CACHE_LINE_SIZE)
 
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 #define DEBUG(...) (DEBUG_MODE ? printf(__VA_ARGS__) : 0)
 #define INTERACTIVE_MODE 1
+#define CACHE_VIEW_MODE 0
 
 #include <stdint.h>
 #include <stdio.h>
@@ -26,12 +27,14 @@ typedef double   f64;
 typedef char     c8;
 
 typedef enum {
-  PR_RD, PR_WR
-} CacheReq;
-
-typedef enum {
   BUS_RD, BUS_RD_WR, BUS_WR
 } BusReq;
+
+char* BusReqView[32] = {
+  "BusRd",
+  "BusRdWr",
+  "BusWr",
+};
 
 typedef struct {
   char state;
