@@ -53,11 +53,11 @@ typedef struct {
 
 Cache cores[4] = { 0 };
 
-i8 total_reads[4];
-i8 read_errors[4];
-i8 total_writes[4];
-i8 write_errors[4];
-i8 total_force_invalidations;
-i8 total_write_backs;
+i32 total_reads[4];
+i32 read_errors[4];
+i32 total_writes[4];
+i32 write_errors[4];
+i32 total_force_invalidations;
+i32 total_write_backs;
 
 #endif

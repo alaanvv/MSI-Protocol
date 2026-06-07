@@ -9,7 +9,7 @@ int main() {
     print_processor_h(cores);
 
   c8 buffer[64];
-  FILE* file = fopen("in/SMALL_TRACE.txt", "r");
+  FILE* file = fopen("in/TRACE.txt", "r");
   u8 core_id;
   char op;
   u16 addr;
