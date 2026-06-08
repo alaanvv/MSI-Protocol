@@ -6,10 +6,14 @@ static void write_back(Core* core) {
   DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
 }
 
-static void force_invalidate_line(Core* core, u16 index) {
-  core->cache.lines[index].state = 'I';
-  core->cache.force_invalidation_count++;
-  DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core->id);
+static void update_line_state(Core* core, u16 index, char state) {
+  if (state == 'I') core->cache.force_invalidation_count++;
+  core->cache.lines[index].state = state;
+  DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA %c\n", index, core->id, state);
+}
+
+static void update_line_tag(Core* core, u16 index, u16 tag) {
+  core->cache.lines[index].tag = tag;
 }
 
 static u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
@@ -38,8 +42,7 @@ static u8 cache_snoop(Core* core, BusReq req, u16 addr, i8* read_from) {
 
     write_back(core);
     *read_from = core->id;
-    core->cache.lines[index].state = 'S';
-    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA S\n", index, core->id);
+    update_line_state(core, index, 'S');
     return 1;
   }
   if (req == BUS_WR) {
@@ -49,7 +52,7 @@ static u8 cache_snoop(Core* core, BusReq req, u16 addr, i8* read_from) {
 
     if (core->cache.lines[index].state == 'M') write_back(core);
 
-    force_invalidate_line(core, index);
+    update_line_state(core, index, 'I');
     return 1;
   }
   if (req == BUS_RD_WR) {
@@ -63,7 +66,7 @@ static u8 cache_snoop(Core* core, BusReq req, u16 addr, i8* read_from) {
       *read_from = core->id;
     }
 
-    force_invalidate_line(core, index);
+    update_line_state(core, index, 'I');
     return 1;
   }
   return 0;
@@ -110,9 +113,8 @@ void cache_rd(Core* core, u16 addr) {
     if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core->id);
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core->id);
     if (line->state == 'M') write_back(core);
-    line->tag   = tag;
-    line->state = 'S';
-    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA S\n", index, core->id);
+    update_line_state(core, index, 'S');
+    update_line_tag(core, index, tag);
   }
   else DEBUG("EVENTO NA CACHE: HIT DE LEITURA\n");
 }
@@ -133,9 +135,8 @@ void cache_wr(Core* core, u16 addr) {
     i8 read_from = -1;
     if (line->state == 'S')
       bus_sig(BUS_WR, core->id, addr, &read_from);
-    line->tag   = tag;
-    line->state = 'M';
-    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA M\n", index, core->id);
+    update_line_state(core, index, 'M');
+    update_line_tag(core, index, tag);
   }
   else {
     core->cache.wr_err_count++;
@@ -145,8 +146,7 @@ void cache_wr(Core* core, u16 addr) {
     if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core->id);
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core->id);
     if (line->state == 'M') write_back(core);
-    line->tag   = tag;
-    line->state = 'M';
-    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA M\n", index, core->id);
+    update_line_state(core, index, 'M');
+    update_line_tag(core, index, tag);
   }
 }
