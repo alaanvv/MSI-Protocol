@@ -42,6 +42,10 @@ void cache_rd(Cache* cache, u8 core_id, u16 addr) {
     bus_sig(BUS_RD, core_id, addr, &read_from);
     if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core_id);
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
+    if (line->state == 'M') {
+      total_write_backs++;
+      DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+    }
     line->tag   = tag;
     line->state = 'S';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA S\n", index, core_id);
@@ -76,6 +80,10 @@ void cache_wr(Cache* cache, u8 core_id, u16 addr) {
     bus_sig(BUS_RD_WR, core_id, addr, &read_from);
     if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core_id);
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
+    if (line->state == 'M') {
+      total_write_backs++;
+      DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+    }
     line->tag   = tag;
     line->state = 'M';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA M\n", index, core_id);
@@ -127,7 +135,10 @@ u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from) {
     u8 hit = tag_lookup(cache, addr, NULL, &index);
     if (!hit) return 0;
 
-    if (cache->lines[index].state == 'M') DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+    if (cache->lines[index].state == 'M') {
+      DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+      total_write_backs++;
+    }
 
     total_force_invalidations++;
     cache->lines[index].state = 'I';
