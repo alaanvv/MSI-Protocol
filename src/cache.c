@@ -1,6 +1,11 @@
 #include <string.h>
 #include "cache.h"
 
+static void write_back(Cache* cache) {
+  DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+  cache->write_back_count++;
+}
+
 static u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
   u16    tag = addr / LINE_SIZE / LINE_AMOUNT;
   u16  index = addr / LINE_SIZE % LINE_AMOUNT;
@@ -25,8 +30,7 @@ static u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_f
       return 1;
     }
 
-    cache->write_back_count++;
-    DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+    write_back(cache);
     *read_from = core_id;
     cache->lines[index].state = 'S';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA S\n", index, core_id);
@@ -37,10 +41,7 @@ static u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_f
     u8 hit = tag_lookup(cache, addr, NULL, &index);
     if (!hit) return 0;
 
-    if (cache->lines[index].state == 'M') {
-      DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
-      cache->write_back_count++;
-    }
+    if (cache->lines[index].state == 'M') write_back(cache);
 
     cache->force_invalidation_count++;
     cache->lines[index].state = 'I';
@@ -54,8 +55,7 @@ static u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_f
     char state = cache->lines[index].state;
 
     if (state == 'M') {
-      DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
-      cache->write_back_count++;
+      write_back(cache);
       *read_from = core_id;
     }
 
@@ -107,10 +107,7 @@ void cache_rd(Cache* cache, u8 core_id, u16 addr) {
     bus_sig(BUS_RD, core_id, addr, &read_from);
     if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core_id);
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
-    if (line->state == 'M') {
-      cache->write_back_count++;
-      DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
-    }
+    if (line->state == 'M') write_back(cache);
     line->tag   = tag;
     line->state = 'S';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA S\n", index, core_id);
@@ -145,10 +142,7 @@ void cache_wr(Cache* cache, u8 core_id, u16 addr) {
     bus_sig(BUS_RD_WR, core_id, addr, &read_from);
     if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core_id);
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
-    if (line->state == 'M') {
-      cache->write_back_count++;
-      DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
-    }
+    if (line->state == 'M') write_back(cache);
     line->tag   = tag;
     line->state = 'M';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA M\n", index, core_id);
