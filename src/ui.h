@@ -30,7 +30,7 @@ void print_processor(Cache caches[4]) {
   for (u8 c = 0; c < CORE_AMOUNT; c++) print_core(caches[c], c);
 }
 
-void print_processor_h(Cache caches[4]) {
+void print_processor_h(Core cores[4]) {
   char ascii[LINE_AMOUNT + 3][CORE_AMOUNT * 32] = { 0 };
   char buffer[64];
 
@@ -41,7 +41,7 @@ void print_processor_h(Cache caches[4]) {
 
   for (u8 c = 0; c < CORE_AMOUNT; c++) {
     for (u32 l = 0; l < LINE_AMOUNT; l++) {
-      sprintf(buffer, "│ %c │ 0x%04x │", caches[c].lines[l].state, caches[c].lines[l].tag);
+      sprintf(buffer, "│ %c │ 0x%04x │", cores[c].cache.lines[l].state, cores[c].cache.lines[l].tag);
       strcat(ascii[1 + l], buffer);
     }
   }

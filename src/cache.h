@@ -25,7 +25,7 @@ u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
 }
 
 void cache_rd(Cache* cache, u8 core_id, u16 addr) {
-  total_reads[core_id]++;
+  cache->rd_count++;
 
   u16 tag, index;
   u8 hit = tag_lookup(cache, addr, &tag, &index);
@@ -36,14 +36,14 @@ void cache_rd(Cache* cache, u8 core_id, u16 addr) {
   Line* line = &cache->lines[index];
 
   if (!hit) {
-    read_errors[core_id]++;
+    cache->rd_err_count++;
     DEBUG("EVENTO NA CACHE: MISS DE LEITURA\n");
     i8 read_from = -1;
     bus_sig(BUS_RD, core_id, addr, &read_from);
     if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core_id);
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
     if (line->state == 'M') {
-      total_write_backs++;
+      cache->write_back_count++;
       DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
     }
     line->tag   = tag;
@@ -54,7 +54,7 @@ void cache_rd(Cache* cache, u8 core_id, u16 addr) {
 }
 
 void cache_wr(Cache* cache, u8 core_id, u16 addr) {
-  total_writes[core_id]++;
+  cache->wr_count++;
 
   u16 tag, index;
   u8 hit = tag_lookup(cache, addr, &tag, &index);
@@ -74,14 +74,14 @@ void cache_wr(Cache* cache, u8 core_id, u16 addr) {
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA M\n", index, core_id);
   }
   else {
-    write_errors[core_id]++;
+    cache->wr_err_count++;
     DEBUG("EVENTO NA CACHE: MISS DE ESCRITA\n");
     i8 read_from = -1;
     bus_sig(BUS_RD_WR, core_id, addr, &read_from);
     if (read_from == -1) DEBUG("BLOCO LIDO DA MEMÓRIA PARA A LINHA %d DA CACHE DO CORE %d\n", index, core_id);
     else                 DEBUG("BLOCO LIDO DA LINHA %d DA CACHE DO CORE %d PARA A LINHA %d DA CACHE DO CORE %d\n", index, read_from, index, core_id);
     if (line->state == 'M') {
-      total_write_backs++;
+      cache->write_back_count++;
       DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
     }
     line->tag   = tag;
@@ -98,7 +98,7 @@ void bus_sig(BusReq req, u8 from_id, u16 addr, i8* read_from) {
   char found_str[16] = {0};
   for (u8 c = 0; c < CORE_AMOUNT; c++) {
     if (c == from_id) continue;
-    u8 _found = cache_snoop(&cores[c], c, req, addr, read_from);
+    u8 _found = cache_snoop(&cores[c].cache, c, req, addr, read_from);
     found_multiple |= found && _found;
     found = found || _found;
     char buffer[32];
@@ -123,7 +123,7 @@ u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from) {
       return 1;
     }
 
-    total_write_backs++;
+    cache->write_back_count++;
     DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
     *read_from = core_id;
     cache->lines[index].state = 'S';
@@ -137,10 +137,10 @@ u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from) {
 
     if (cache->lines[index].state == 'M') {
       DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
-      total_write_backs++;
+      cache->write_back_count++;
     }
 
-    total_force_invalidations++;
+    cache->force_invalidation_count++;
     cache->lines[index].state = 'I';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core_id);
     return 1;
@@ -153,11 +153,11 @@ u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from) {
 
     if (state == 'M') {
       DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
-      total_write_backs++;
+      cache->write_back_count++;
       *read_from = core_id;
     }
 
-    total_force_invalidations++;
+    cache->force_invalidation_count++;
     cache->lines[index].state = 'I';
     DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core_id);
     return 1;

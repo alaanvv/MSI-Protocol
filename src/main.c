@@ -3,7 +3,7 @@
 int main() {
   for (u8 c = 0; c < 4; c++)
     for (u32 l = 0; l < LINE_AMOUNT; l++)
-      cores[c].lines[l].state = 'I';
+      cores[c].cache.lines[l].state = 'I';
 
   if (CACHE_VIEW_MODE)
     print_processor_h(cores);
@@ -30,7 +30,7 @@ int main() {
       getchar();
     }
 
-    Cache* cache = &cores[core_id];
+    Cache* cache = &cores[core_id].cache;
     if (op == 'R') {
       DEBUG("REQUISIÇÃO DE PROCESSADOR: PrRd no endereço 0x%04x\n", addr);
       cache_rd(cache, core_id, addr);
@@ -41,10 +41,15 @@ int main() {
     }
   }
 
+  u32 total_force_invalidations = 0;
+  u32 total_write_backs = 0;
   for (u8 c = 0; c < CORE_AMOUNT; c++) {
-    DEBUG("TAXA DE ERROS DE LEITURA DO CORE %d: %f\n", c, (f32) read_errors[c] / total_reads[c]);
-    DEBUG("TAXA DE ERROS DE ESCRITA DO CORE %d: %f\n", c, (f32) write_errors[c] / total_writes[c]);
+    DEBUG("TAXA DE ERROS DE LEITURA DO CORE %d: %f\n", c, (f32) cores[c].cache.rd_err_count / cores[c].cache.rd_count);
+    DEBUG("TAXA DE ERROS DE ESCRITA DO CORE %d: %f\n", c, (f32) cores[c].cache.wr_err_count / cores[c].cache.wr_count);
+    total_force_invalidations += cores[c].cache.force_invalidation_count;
+    total_write_backs += cores[c].cache.write_back_count;
   }
+
   DEBUG("INVALIDAÇÕES FORÇADAS: %d\n", total_force_invalidations);
   DEBUG("WRITE-BACKS: %d\n", total_write_backs);
 

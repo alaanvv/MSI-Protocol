@@ -39,17 +39,18 @@ typedef struct {
 
 typedef struct {
   Line lines[LINE_AMOUNT];
+  u32 rd_count, rd_err_count;
+  u32 wr_count, wr_err_count;
+  u32 force_invalidation_count;
+  u32 write_back_count;
 } Cache;
+
+typedef struct {
+  Cache cache;
+} Core;
 
 extern const char* BusReqView[32];
 
-extern Cache cores[4];
-
-extern u32 total_reads[4];
-extern u32 read_errors[4];
-extern u32 total_writes[4];
-extern u32 write_errors[4];
-extern u32 total_force_invalidations;
-extern u32 total_write_backs;
+extern Core cores[4];
 
 #endif
