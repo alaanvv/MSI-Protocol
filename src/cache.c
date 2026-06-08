@@ -2,8 +2,14 @@
 #include "cache.h"
 
 static void write_back(Core* core) {
-  DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
   core->cache.write_back_count++;
+  DEBUG("MEMÓRIA RAM ATUALIZADA (WRITE-BACK)\n");
+}
+
+static void force_invalidate_line(Core* core, u16 index) {
+  core->cache.lines[index].state = 'I';
+  core->cache.force_invalidation_count++;
+  DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core->id);
 }
 
 static u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
@@ -43,9 +49,7 @@ static u8 cache_snoop(Core* core, BusReq req, u16 addr, i8* read_from) {
 
     if (core->cache.lines[index].state == 'M') write_back(core);
 
-    core->cache.force_invalidation_count++;
-    core->cache.lines[index].state = 'I';
-    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core->id);
+    force_invalidate_line(core, index);
     return 1;
   }
   if (req == BUS_RD_WR) {
@@ -59,9 +63,7 @@ static u8 cache_snoop(Core* core, BusReq req, u16 addr, i8* read_from) {
       *read_from = core->id;
     }
 
-    core->cache.force_invalidation_count++;
-    core->cache.lines[index].state = 'I';
-    DEBUG("ESTADO DA LINHA %d DA CACHE DO CORE %d ATUALIZADO PARA I\n", index, core->id);
+    force_invalidate_line(core, index);
     return 1;
   }
   return 0;
