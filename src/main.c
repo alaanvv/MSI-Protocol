@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "ui.h"
 
 int main() {
   for (u8 c = 0; c < 4; c++)
