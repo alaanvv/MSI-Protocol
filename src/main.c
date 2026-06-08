@@ -2,7 +2,7 @@
 
 int main() {
   for (u8 c = 0; c < 4; c++)
-    for (u32 l = 0; l < CACHE_LINE_COUNT; l++)
+    for (u32 l = 0; l < LINE_AMOUNT; l++)
       cores[c].lines[l].state = 'I';
 
   if (CACHE_VIEW_MODE)
@@ -41,7 +41,7 @@ int main() {
     }
   }
 
-  for (u8 c = 0; c < CACHE_COUNT; c++) {
+  for (u8 c = 0; c < CORE_AMOUNT; c++) {
     DEBUG("TAXA DE ERROS DE LEITURA DO CORE %d: %f\n", c, (f32) read_errors[c] / total_reads[c]);
     DEBUG("TAXA DE ERROS DE ESCRITA DO CORE %d: %f\n", c, (f32) write_errors[c] / total_writes[c]);
   }

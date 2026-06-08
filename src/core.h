@@ -1,23 +1,23 @@
 #ifndef CORE_H
 #define CORE_H
 
-#define PRINT(...) { printf(__VA_ARGS__); printf("\n"); }
-
-#define CACHE_COUNT 4
-#define TOTAL_CACHE_SIZE 4096
-#define CACHE_LINE_SIZE  16
-#define CACHE_LINE_COUNT (TOTAL_CACHE_SIZE / CACHE_LINE_SIZE)
-
 #ifndef DEBUG_MODE
 #define DEBUG_MODE 0
 #endif
-#ifndef INTERACTIVE_MODE 
+#ifndef INTERACTIVE_MODE
 #define INTERACTIVE_MODE 0
 #endif
-#ifndef CACHE_VIEW_MODE 
+#ifndef CACHE_VIEW_MODE
 #define CACHE_VIEW_MODE 0
 #endif
+
 #define DEBUG(...) (DEBUG_MODE ? printf(__VA_ARGS__) : 0)
+#define PRINT(...) { printf(__VA_ARGS__); printf("\n"); }
+
+#define CACHE_SIZE  4096
+#define LINE_SIZE   16
+#define CORE_AMOUNT 4
+#define LINE_AMOUNT (CACHE_SIZE / LINE_SIZE)
 
 #include <stdint.h>
 #include <stdio.h>
@@ -48,7 +48,7 @@ typedef struct {
 } Line;
 
 typedef struct {
-  Line lines[CACHE_LINE_COUNT];
+  Line lines[LINE_AMOUNT];
 } Cache;
 
 Cache cores[4] = { 0 };

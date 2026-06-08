@@ -12,8 +12,8 @@ u8 cache_snoop(Cache* cache, u8 core_id, BusReq req, u16 addr, i8* read_from);
 // ---
 
 u8 tag_lookup(Cache* cache, u16 addr, u16* tag_out, u16* index_out) {
-  u16    tag = addr / CACHE_LINE_SIZE / CACHE_LINE_COUNT;
-  u16  index = addr / CACHE_LINE_SIZE % CACHE_LINE_COUNT;
+  u16    tag = addr / LINE_SIZE / LINE_AMOUNT;
+  u16  index = addr / LINE_SIZE % LINE_AMOUNT;
   Line* line = &cache->lines[index];
 
   if (tag_out)   *tag_out   = tag;
@@ -96,7 +96,7 @@ void bus_sig(BusReq req, u8 from_id, u16 addr, i8* read_from) {
   u8 found = 0;
   u8 found_multiple = 0;
   char found_str[16] = {0};
-  for (u8 c = 0; c < CACHE_COUNT; c++) {
+  for (u8 c = 0; c < CORE_AMOUNT; c++) {
     if (c == from_id) continue;
     u8 _found = cache_snoop(&cores[c], c, req, addr, read_from);
     found_multiple |= found && _found;
