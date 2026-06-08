@@ -47,6 +47,7 @@ typedef struct {
 
 typedef struct {
   Cache cache;
+  u8 id;
 } Core;
 
 extern const char* BusReqView[32];

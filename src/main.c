@@ -3,8 +3,10 @@
 
 int main() {
   for (u8 c = 0; c < 4; c++)
-    for (u32 l = 0; l < LINE_AMOUNT; l++)
+    for (u32 l = 0; l < LINE_AMOUNT; l++) {
       cores[c].cache.lines[l].state = 'I';
+      cores[c].id = c;
+    }
 
   if (CACHE_VIEW_MODE)
     print_proc(cores);
@@ -31,14 +33,14 @@ int main() {
       getchar();
     }
 
-    Cache* cache = &cores[core_id].cache;
+    Core* core = &cores[core_id];
     if (op == 'R') {
       DEBUG("REQUISIÇÃO DE PROCESSADOR: PrRd no endereço 0x%04x\n", addr);
-      cache_rd(cache, core_id, addr);
+      cache_rd(core, addr);
     }
     else {
       DEBUG("REQUISIÇÃO DE PROCESSADOR: PrWr no endereço 0x%04x\n", addr);
-      cache_wr(cache, core_id, addr);
+      cache_wr(core, addr);
     }
   }
 

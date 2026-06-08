@@ -3,7 +3,7 @@
 
 #include "core.h"
 
-void cache_rd(Cache* cache, u8 core_id, u16 addr);
-void cache_wr(Cache* cache, u8 core_id, u16 addr);
+void cache_rd(Core* core, u16 addr);
+void cache_wr(Core* core, u16 addr);
 
 #endif
