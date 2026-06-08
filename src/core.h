@@ -32,12 +32,6 @@ typedef enum {
   BUS_RD, BUS_RD_WR, BUS_WR
 } BusReq;
 
-char* BusReqView[32] = {
-  "BusRd",
-  "BusRdWr",
-  "BusWr",
-};
-
 typedef struct {
   char state;
   u16  tag;
@@ -47,13 +41,15 @@ typedef struct {
   Line lines[LINE_AMOUNT];
 } Cache;
 
-Cache cores[4] = { 0 };
+extern const char* BusReqView[32];
 
-u32 total_reads[4];
-u32 read_errors[4];
-u32 total_writes[4];
-u32 write_errors[4];
-u32 total_force_invalidations;
-u32 total_write_backs;
+extern Cache cores[4];
+
+extern u32 total_reads[4];
+extern u32 read_errors[4];
+extern u32 total_writes[4];
+extern u32 write_errors[4];
+extern u32 total_force_invalidations;
+extern u32 total_write_backs;
 
 #endif
