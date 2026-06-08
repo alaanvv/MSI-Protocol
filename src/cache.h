@@ -1,6 +1,7 @@
 #ifndef CACHE_H
 #define CACHE_H
 
+#include <string.h>
 #include "core.h"
 #include "ui.h"
 

@@ -6,7 +6,7 @@ int main() {
       cores[c].cache.lines[l].state = 'I';
 
   if (CACHE_VIEW_MODE)
-    print_processor_h(cores);
+    print_proc(cores);
 
   char buffer[64];
   FILE* file = fopen("in/TRACE.txt", "r");
@@ -21,9 +21,9 @@ int main() {
     if (CACHE_VIEW_MODE) {
       printf("\033[2J\033[H");
       fflush(stdout);
-      print_processor_h(cores);
+      print_proc(cores);
       printf("\n> %s", buffer);
-      print_address(addr);
+      print_addr(addr);
     }
 
     if (INTERACTIVE_MODE) {
