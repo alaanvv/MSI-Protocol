@@ -8,7 +8,7 @@ int main() {
   if (CACHE_VIEW_MODE)
     print_processor_h(cores);
 
-  c8 buffer[64];
+  char buffer[64];
   FILE* file = fopen("in/TRACE.txt", "r");
   u8 core_id;
   char op;
